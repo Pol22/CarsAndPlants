@@ -20,7 +20,8 @@ def load_img(path_label):
     return img, tf.one_hot(tf.strings.to_number(label, tf.int32), 3)
 
 
-def create_dataset(file_path, size=256, batch_size=16, repeat=10, training=True):
+def create_dataset(file_path, size=256, batch_size=16, repeat=10,
+                   training=True, shuffle=True):
     # classes: 0 - vehicles, 1 - plants, 2 - others
 
     data = read_data(file_path)
@@ -46,10 +47,11 @@ def create_dataset(file_path, size=256, batch_size=16, repeat=10, training=True)
     ds = ds.map(lambda x, y: (augmentation(x, training=training), y),
                 num_parallel_calls=tf.data.AUTOTUNE)
 
-    ds = ds.shuffle(buffer_size=1000)
+    if shuffle:
+        ds = ds.shuffle(buffer_size=1000)
+
     ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
     return ds
-
 
 
 class_names = ['vehicles', 'plants', 'others']
@@ -65,7 +67,8 @@ val_ds = create_dataset(
     size=256,
     batch_size=16,
     repeat=3,
-    training=True
+    training=True,
+    shuffle=False
 )
 
 base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
@@ -88,9 +91,9 @@ model = tf.keras.Model(inputs, outputs)
 metrics = [
     'accuracy',
     tfa.metrics.F1Score(num_classes=3),
-    tf.keras.metrics.Precision(class_id=0, name='vehicles_pres'),
-    tf.keras.metrics.Precision(class_id=1, name='plants_pres'),
-    tf.keras.metrics.Precision(class_id=2, name='others_pres'),
+    # tf.keras.metrics.Precision(class_id=0, name='vehicles_pres'),
+    # tf.keras.metrics.Precision(class_id=1, name='plants_pres'),
+    # tf.keras.metrics.Precision(class_id=2, name='others_pres'),
 ]
 
 model.compile(
@@ -102,9 +105,7 @@ class_weight = {0: 5.0, 1: 5.0, 2: 0.5} # 150/150/1200
 
 csv_logger = tf.keras.callbacks.CSVLogger('training.log')
 saver = tf.keras.callbacks.ModelCheckpoint(
-    filepath='model_{epoch}-{val_loss:.2f}.h5',
-    save_best_only=True,
-    monitor='val_loss',
+    filepath='model_{epoch}.h5',
     verbose=1,
 )
 

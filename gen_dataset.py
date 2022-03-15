@@ -4,14 +4,14 @@ import json
 with open('data.json') as json_file:
     data = json.load(json_file)
 
+
 train_key = 'initial_bundle'
 test_key = 'test_bundle'
 vehicles_key = 'Vehicles'
 plants_key = 'Plants'
 
+
 # classes 0 - vehicles, 1 - plants, 2 - others
-
-
 def gen_data(dataset_file, data):
     vehicles_count = 0
     plants_count = 0
@@ -46,5 +46,3 @@ def gen_data(dataset_file, data):
 
 gen_data('train_data.txt', data[train_key])
 gen_data('test_data.txt', data[test_key])
-
-
